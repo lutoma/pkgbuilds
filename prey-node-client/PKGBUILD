@@ -14,10 +14,13 @@ install='prey-node-client.install'
 
 # The URL uses x64 and x86 to identify architecture. While this is a weird
 # format, we can just use the last two characters of $CARCH to choose one.
-source=("https://s3.amazonaws.com/prey-releases/node-client/${pkgver}/prey-linux-${pkgver}-x${CARCH:(-2)}.zip")
+source=('prey-node-client.patch' "https://s3.amazonaws.com/prey-releases/node-client/${pkgver}/prey-linux-${pkgver}-x${CARCH:(-2)}.zip")
+sha256sums=('d40ffe0733ab8ea478f653ad9e0a6f3aa247d6608987e552aecbb30352ae608e')
 
-[ "$CARCH" == "i686" ] && sha256sums=('c7fbb3685f5397e1d0d1b31642f653c632f3733b16b93f658f14cac27b700cae')
-[ "$CARCH" == "x86_64" ] && sha256sums=('83476a596c6f10ef7f1b9b5fa87c065089393426b55bfdee2ae0c95cd6bb2e58')
+
+[ "$CARCH" == "i686" ] && sha256sums+=('c7fbb3685f5397e1d0d1b31642f653c632f3733b16b93f658f14cac27b700cae')
+[ "$CARCH" == "x86_64" ] && sha256sums+=('83476a596c6f10ef7f1b9b5fa87c065089393426b55bfdee2ae0c95cd6bb2e58')
+
 
 package() {
   cd "${srcdir}/prey-${pkgver}"
@@ -27,12 +30,8 @@ package() {
   # the system node if the bundled one is not found.
   rm bin/node
 
-  # Disable automatic updates by default
-  sed -i "s/auto_update = true/auto_update = false/" prey.conf.default
-
-  # Fix the automatic symlink detection in the main script
-  sed -i 's#dir="$dir/$rel"#dir="$rel"#' bin/prey
-  sed -i 's/via npm/via pacman/' bin/prey
+  # Fix symlink path, Python shebangs and default-disable automatic updates
+  patch -p0 < ../../prey-node-client.patch
 
   mkdir -p "$pkgdir/opt/prey-node-client/"
   cp -r ./* "$pkgdir/opt/prey-node-client/"
